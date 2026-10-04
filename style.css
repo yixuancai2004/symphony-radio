@@ -276,7 +276,6 @@ button { font: inherit; color: inherit; background: none; border: 0; }
 .card .meta a { color: #6b6550; }
 .card .meta a:hover { color: var(--ink); }
 .card .who { margin-top: 12px; font-size: 13px; color: #6b6550; }
-.card .fine { margin-top: 8px; font-size: 10.5px; color: #8a8470; }
 .card .lang { font-family: var(--label); font-size: 12px; color: #6b6550; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .card .loading { font-size: 13px; color: #6b6550; }
 .card > * { animation: settle .4s ease-out both; }

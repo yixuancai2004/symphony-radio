@@ -420,8 +420,7 @@ function cardHTML(t, n, lang) {
     ${tempo ? `<p class="move"><b>${esc(tempo.word)}</b>${esc(tempo.text)}</p>` : ''}
     ${bio ? `<p class="txt">${esc(bio)}</p>` : ''}
     ${t.performer ? `<p class="who">${zh ? '演奏' : 'Performed by'}：${esc(t.performer)}</p>` : ''}
-    <div class="meta"><span>${links}</span><button class="lang">${zh ? 'EN' : '中文'}</button></div>
-    <p class="fine">${zh ? '非官方页面 · 直播来自 Mediacorp Symphony 92.4 · 资料来自维基百科' : 'Unofficial · Live stream from Mediacorp Symphony 92.4 · Notes from Wikipedia'}</p>`;
+    <div class="meta"><span>${links}</span><button class="lang">${zh ? 'EN' : '中文'}</button></div>`;
 }
 
 // Strip pronunciations and bracketed asides, then keep the first sentences.

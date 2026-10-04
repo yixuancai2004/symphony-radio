@@ -1,7 +1,7 @@
 {
   "name": "92.4 小收音机",
   "short_name": "92.4",
-  "description": "一台只有一个旋钮的小收音机，收听 Symphony 92.4（非官方）。",
+  "description": "一台只有一个旋钮的小收音机，收听 Symphony 92.4。",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
