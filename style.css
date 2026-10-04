@@ -1,276 +1,307 @@
 /* ============================================================
-   92.4 小收音机 — one small object, one button.
-   Layout: a single radio resting in the middle of an empty desk;
-   one line of text beneath it; everything else stays hidden.
+   92.4 小收音机 — a 1960s transistor radio on a desk at night.
+   Layout: one radio in the middle of a dark desk; one line under it;
+   a printed card slides out only when asked. Deliberately one theme.
+
+   State lives on .radio / .app as data-power and data-stream; the
+   needle and the dial light are animated custom properties.
    ============================================================ */
 
-:root {
-  --bg: #e4e2dc;        /* desk */
-  --fg: #1d1d1b;
-  --muted: #77736b;
-  --body: #f4f3ef;      /* radio housing */
-  --edge: #cfccc4;
-  --hole: #2a2926;      /* speaker holes */
-  --accent: #e2701c;    /* the one lit thing */
-  --sheet: #f7f6f2;
+@property --needle { syntax: '<number>'; inherits: true; initial-value: .03; }
+@property --warm { syntax: '<number>'; inherits: true; initial-value: 0; }
 
-  --sans: 'Zen Kaku Gothic New', 'Hiragino Sans', 'PingFang SC', system-ui, sans-serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #121211; --fg: #ecebe7; --muted: #8d8a83;
-    --body: #2a2a27; --edge: #1b1b19; --hole: #0d0d0c;
-    --accent: #f08a35; --sheet: #1f1f1d;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #121211; --fg: #ecebe7; --muted: #8d8a83;
-  --body: #2a2a27; --edge: #1b1b19; --hole: #0d0d0c;
-  --accent: #f08a35; --sheet: #1f1f1d;
+:root {
   color-scheme: dark;
+  --desk: #2b2a22;       /* dark olive-brown */
+  --desk-lit: #37352b;
+  --sage: #9fb59c;       /* radio body */
+  --sage-dark: #7f977c;
+  --ivory: #efe6cf;
+  --brass: #b8954a;
+  --amber: #f0c46a;      /* dial, lit */
+  --tomato: #c4452f;     /* needle, the one sharp colour */
+  --ink: #2b2a22;
+  --text: #e9e1cc;
+  --muted: #a39d86;
+
+  --label: 'Jost', 'Futura', 'Avenir Next', system-ui, sans-serif;
+  --serif: 'Noto Serif SC', 'Songti SC', 'STSong', serif;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
 body {
-  background: var(--bg);
-  color: var(--fg);
-  font-family: var(--sans);
+  background: radial-gradient(ellipse 80% 60% at 50% 38%, var(--desk-lit), var(--desk) 70%) fixed, var(--desk);
+  color: var(--text);
+  font-family: var(--serif);
   -webkit-tap-highlight-color: transparent;
 }
 button { font: inherit; color: inherit; background: none; border: 0; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 4px; }
 
 .app {
   min-height: 100%;
   display: grid;
-  grid-template-rows: 1fr auto;
   padding-inline: 16px;
   padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px);
 }
 
 .desk {
   display: grid;
-  place-content: center;
+  align-content: center;
   justify-items: center;
-  gap: 34px;
-  padding-block: 48px;
+  gap: 26px;
+  padding-block: 56px 24px;
 }
 
 /* ---------- the radio ---------- */
 
 .radio {
-  width: 232px; height: 148px;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: 26px;
-  padding: 22px 26px;
-  border-radius: 30px;
-  background: var(--body);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.5),
-    inset 0 -3px 0 var(--edge),
-    0 1px 2px rgba(0,0,0,.08),
-    0 18px 34px -16px rgba(0,0,0,.35);
-}
-
-/* a circle of punched holes */
-.grille {
-  width: 100px; height: 100px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--hole) 1.7px, transparent 2.2px) center / 9px 9px;
-  -webkit-mask: radial-gradient(circle, #000 64%, transparent 66%);
-          mask: radial-gradient(circle, #000 64%, transparent 66%);
-  opacity: .78;
-  transition: opacity .6s;
-}
-/* while music plays, the holes breathe very slightly */
-.radio[data-stream="live"] .grille { animation: breathe 3.2s ease-in-out infinite; }
-@keyframes breathe { 50% { opacity: .95; } }
-
-.controls { display: grid; justify-items: center; gap: 12px; }
-
-.power {
+  --needle: .03;
+  --warm: 0;
   position: relative;
-  width: 56px; height: 56px;
-  border-radius: 50%;
-  cursor: pointer;
-  background: var(--body);
+  width: 300px;
+  padding: 18px 18px 20px;
+  border-radius: 26px;
+  background: radial-gradient(120% 90% at 30% 8%, #b6c9b1, var(--sage) 45%, var(--sage-dark));
   box-shadow:
-    0 0 0 1px var(--edge),
-    0 4px 0 var(--edge),
-    0 6px 10px -4px rgba(0,0,0,.35);
-  transition: transform .12s, box-shadow .12s;
+    inset 0 2px 0 rgba(255,255,255,.35),
+    inset 0 -4px 0 rgba(0,0,0,.14),
+    0 2px 3px rgba(0,0,0,.35),
+    0 34px 44px -26px rgba(0,0,0,.8);
+  transition: --needle 1.6s cubic-bezier(.25, 1.25, .45, 1), --warm 1.4s ease-out;
 }
-/* the lamp: a small dot in the button */
-.power::after {
+/* a little grain so the plastic isn't flat */
+.radio::after {
   content: '';
-  position: absolute; top: 50%; left: 50%;
-  width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px;
-  border-radius: 50%;
-  background: var(--edge);
-  transition: background .4s, box-shadow .4s;
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: .22;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .3 0 0 0 0 .25 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-.power:active { transform: translateY(3px); box-shadow: 0 0 0 1px var(--edge), 0 1px 0 var(--edge), 0 2px 4px -2px rgba(0,0,0,.3); }
-.radio[data-power="on"] .power { transform: translateY(2px); box-shadow: 0 0 0 1px var(--edge), 0 2px 0 var(--edge), 0 3px 6px -3px rgba(0,0,0,.3); }
-.radio[data-power="on"] .power::after { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-.radio[data-stream="loading"] .power::after { animation: blink 1s steps(1) infinite; }
-@keyframes blink { 50% { background: var(--edge); box-shadow: none; } }
+.radio[data-power="on"] { --needle: .22; --warm: 1; }
+/* switching off: the needle falls back more slowly, without the bounce */
+.radio[data-power="off"] { transition: --needle 1.1s cubic-bezier(.5, 0, .3, 1), --warm .8s ease-in; }
 
-.print {
-  font-size: 10px;
-  letter-spacing: .18em;
-  color: var(--muted);
+/* dial window: brass rim, amber glass lit from behind */
+.dial {
+  position: relative;
+  height: 60px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--amber) calc(var(--warm) * 100%), #3a3322);
+  box-shadow:
+    0 0 0 2px var(--brass),
+    0 0 0 3px rgba(0,0,0,.25),
+    inset 0 3px 8px rgba(0,0,0,.45),
+    0 0 calc(var(--warm) * 24px) rgba(240,196,106,.35);
+}
+.dial::after {
+  content: '';
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background: linear-gradient(170deg, rgba(255,255,255,.28), transparent 38%);
+}
+.radio[data-stream="loading"] .dial { animation: flicker 1.8s steps(1) infinite; }
+@keyframes flicker { 0%, 100% { filter: none; } 37% { filter: brightness(.86); } 41% { filter: none; } 72% { filter: brightness(.93); } }
+
+.scale {
+  position: absolute; left: 22px; right: 22px; top: 0; bottom: 0;
+  /* ticks every 0.5 MHz */
+  background:
+    repeating-linear-gradient(90deg, rgba(58,42,18,.75) 0 1px, transparent 1px 2.5%) left bottom / calc(100% + 1px) 7px no-repeat;
+  opacity: calc(.35 + var(--warm) * .65);
+}
+.scale span {
+  position: absolute; top: 12px;
+  transform: translateX(-50%);
+  font-family: var(--label);
+  font-size: 12px;
+  font-weight: 500;
+  color: #3a2a12;
   font-variant-numeric: tabular-nums;
 }
+.needle {
+  position: absolute; top: 6px; bottom: 3px;
+  left: calc(var(--needle) * 100%);
+  width: 2px; margin-left: -1px;
+  background: var(--tomato);
+  box-shadow: 0 0 calc(var(--warm) * 6px) rgba(196,69,47,.7);
+}
+.band, .unit {
+  position: absolute; bottom: 8px;
+  font-family: var(--label); font-size: 8px; font-weight: 500;
+  letter-spacing: .14em;
+  color: rgba(58,42,18,.7);
+}
+.band { left: 6px; }
+.unit { right: 5px; }
 
-/* ---------- the one line beneath ---------- */
+.lower {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+/* ivory grille with horizontal slots */
+.grille {
+  height: 76px;
+  border-radius: 8px;
+  background: repeating-linear-gradient(180deg, var(--ivory) 0 6px, #3b3a2f 6px 9px);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.3);
+}
+
+/* rotary switch: a quarter turn from OFF to ON */
+.switch {
+  position: relative;
+  width: 84px; height: 84px;
+  display: grid; place-items: center;
+}
+.mark {
+  position: absolute;
+  font-family: var(--label); font-size: 8px; font-weight: 500;
+  letter-spacing: .12em;
+  color: rgba(43,42,34,.65);
+}
+.mark.off { top: -2px; left: 50%; transform: translateX(-50%); }
+.mark.on { right: -6px; top: 50%; transform: translateY(-50%); }
+.radio[data-power="on"] .mark.on { color: var(--ink); }
+
+.knob {
+  position: relative;
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  cursor: pointer;
+  background:
+    radial-gradient(circle, transparent 66%, rgba(0,0,0,.12) 67%),
+    repeating-conic-gradient(#e9dfc5 0 6deg, #d6caac 6deg 12deg),
+    var(--ivory);
+  box-shadow:
+    0 0 0 3px var(--brass),
+    0 0 0 4px rgba(0,0,0,.25),
+    0 7px 9px -3px rgba(0,0,0,.45);
+  transition: transform .42s cubic-bezier(.5, 1.7, .45, 1);
+}
+/* the centre cap and its pointer turn with the knob */
+.knob i {
+  position: absolute; inset: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 30%, #fbf6e8, var(--ivory) 55%, #d8cdb0);
+  box-shadow: 0 1px 2px rgba(0,0,0,.25);
+}
+.knob i::after {
+  content: '';
+  position: absolute; left: 50%; top: 4px;
+  width: 3px; height: 13px; margin-left: -1.5px;
+  border-radius: 2px;
+  background: var(--tomato);
+}
+.knob:active { transform: rotate(var(--turn, 0deg)) scale(.96); }
+.radio[data-power="on"] .knob { --turn: 90deg; transform: rotate(90deg); }
+
+/* ---------- the line under the radio ---------- */
 
 .now {
   display: grid; justify-items: center; gap: 4px;
-  max-width: 320px;
+  max-width: 340px;
   text-align: center;
   cursor: pointer;
   transition: opacity .5s;
 }
 .now:disabled { cursor: default; }
-.now-composer { font-weight: 700; font-size: 15px; text-wrap: balance; }
-.now-title { font-size: 13px; line-height: 1.6; color: var(--muted); text-wrap: balance; }
-.now:not(:disabled):hover .now-title { color: var(--fg); }
+.now-composer { font-family: var(--label); font-weight: 500; font-size: 16px; letter-spacing: .02em; text-wrap: balance; }
+.now-title { font-size: 13.5px; line-height: 1.6; color: var(--muted); text-wrap: balance; }
+.now:not(:disabled) .now-title { text-decoration: underline dotted rgba(163,157,134,.6); text-underline-offset: 5px; }
+.now:not(:disabled):hover .now-title { color: var(--text); }
 .now.fading { opacity: 0; }
 
 .status { font-size: 13px; line-height: 1.6; color: var(--muted); text-align: center; max-width: 320px; }
 .app[data-stream="blocked"] .status,
-.app[data-stream="error"] .status { color: var(--accent); }
+.app[data-stream="error"] .status { color: #e39a7e; }
 
 .floating-note { display: none; font-size: 13px; color: var(--muted); }
 .app.floating .slot { display: none; }
 .app.floating .floating-note { display: block; }
 
-.foot {
-  display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
-  gap: 8px 18px;
-  padding-block: 16px;
-  font-size: 11px;
-  color: var(--muted);
+/* ---------- the programme card ---------- */
+
+/* height animates from 0 to its content, then the card drops into place */
+.card-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  width: min(100%, 380px);
+  margin-top: -10px;
+  transition: grid-template-rows .6s cubic-bezier(.2, .8, .2, 1);
 }
-.float {
-  padding: 5px 12px;
-  border: 1px solid var(--edge);
-  border-radius: 999px;
+.card-wrap.open { grid-template-rows: 1fr; }
+.card-clip { overflow: hidden; min-height: 0; padding: 0 6px 18px; }
+
+.card {
+  padding: 20px 22px 18px;
+  background: var(--ivory);
+  color: var(--ink);
+  border-radius: 3px;
+  border-top: 4px double var(--ink);
+  box-shadow: 0 14px 24px -12px rgba(0,0,0,.7);
+  transform: translateY(-24px) rotate(-.4deg);
+  opacity: 0;
+  transition: transform .6s cubic-bezier(.2, .8, .2, 1), opacity .35s;
+}
+.card-wrap.open .card { transform: rotate(-.4deg); opacity: 1; transition-delay: .08s; }
+
+.card h2 { font-weight: 600; font-size: 18px; line-height: 1.45; text-wrap: balance; }
+.card .by { margin-top: 4px; font-size: 13px; color: #6b6550; }
+.card .by b { font-weight: 600; color: var(--ink); }
+.card p.txt { margin-top: 14px; font-size: 14px; line-height: 1.85; }
+.card .move {
+  margin-top: 14px;
+  padding: 9px 12px;
+  border-left: 2px solid var(--tomato);
+  background: rgba(196,69,47,.07);
+  font-size: 13.5px; line-height: 1.7;
+}
+.card .move b { font-family: var(--label); font-weight: 500; font-style: italic; margin-right: 6px; }
+.card .meta {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  margin-top: 16px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(43,42,34,.2);
   font-size: 12px;
-  color: var(--fg);
-  cursor: pointer;
+  color: #6b6550;
 }
-.float:hover { border-color: var(--muted); }
+.card .meta a { color: #6b6550; }
+.card .meta a:hover { color: var(--ink); }
+.card .who { margin-top: 12px; font-size: 13px; color: #6b6550; }
+.card .fine { margin-top: 8px; font-size: 10.5px; color: #8a8470; }
+.card .lang { font-family: var(--label); font-size: 12px; color: #6b6550; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.card .loading { font-size: 13px; color: #6b6550; }
+.card > * { animation: settle .4s ease-out both; }
+@keyframes settle { from { opacity: 0; } }
+
+/* ---------- tapping the radio: float it (desktop) or go full screen ---------- */
+
+.radio.can-float { cursor: zoom-out; }
+.radio.can-float .knob { cursor: pointer; }
+/* lift the wrapper, so the radio's own needle/light transitions stay untouched */
+.slot { transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
+.slot:has(.can-float):hover { transform: translateY(-3px); }
 
 /* ---------- inside the floating window ---------- */
 
-body.pip { display: grid; place-items: center; overflow: hidden; }
-body.pip .radio { transform: scale(var(--pip-scale, 1)); }
+body.pip { display: grid; place-items: center; overflow: hidden; background: var(--desk); }
+body.pip .radio { transform: scale(var(--pip-scale, 1)); cursor: zoom-in; }
 
-/* ---------- notes sheet ---------- */
-
-.scrim {
-  position: fixed; inset: 0; z-index: 19;
-  background: rgba(0,0,0,.35);
-  opacity: 0; pointer-events: none;
-  transition: opacity .35s;
-}
-.scrim.open { opacity: 1; pointer-events: auto; }
-
-/* phones: rises from the bottom */
-.notes {
-  position: fixed; left: 0; right: 0; bottom: 0;
-  z-index: 20;
-  max-height: 86%;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 16px 22px calc(28px + env(safe-area-inset-bottom, 0px));
-  border-radius: 18px 18px 0 0;
-  background: var(--sheet);
-  color: var(--fg);
-  box-shadow: 0 -12px 40px rgba(0,0,0,.25);
-  transform: translateY(104%);
-  transition: transform .45s cubic-bezier(.2, .8, .2, 1);
-}
-.notes.open { transform: none; }
-/* wider screens: slides in from the right */
-@media (min-width: 760px) {
-  .notes {
-    top: 0; left: auto;
-    width: 420px; max-height: none;
-    padding: 24px 30px 40px;
-    border-radius: 0;
-    transform: translateX(104%);
-  }
-}
-
-.notes-head { display: flex; justify-content: space-between; align-items: center; }
-.notes-close { width: 40px; height: 40px; margin-right: -10px; font-size: 26px; line-height: 1; color: var(--muted); cursor: pointer; }
-.lang { display: flex; border: 1px solid var(--edge); border-radius: 999px; overflow: hidden; }
-.lang button { padding: 4px 12px; font-size: 12px; color: var(--muted); cursor: pointer; }
-.lang button[aria-pressed="true"] { background: var(--fg); color: var(--sheet); }
-
-.notes-for { margin: 14px 0 22px; font-size: 15px; line-height: 1.55; }
-.notes-for b { display: block; }
-.notes-for span { color: var(--muted); font-size: 14px; }
-
-.notes-body { display: grid; gap: 26px; }
-.note { display: flow-root; animation: rise .4s ease-out both; }
-@keyframes rise { from { opacity: 0; transform: translateY(6px); } }
-.note-label { font-size: 11px; letter-spacing: .12em; color: var(--muted); }
-.note h3 { font-weight: 700; font-size: 17px; line-height: 1.4; margin: 4px 0 8px; text-wrap: balance; }
-.note .extract { font-size: 14.5px; line-height: 1.9; }
-.note a { display: inline-block; margin-top: 8px; font-size: 13px; color: var(--accent); text-decoration: none; }
-.note a:hover { text-decoration: underline; }
-.note.empty p { font-size: 14px; color: var(--muted); }
-.no-zh { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-
-.portrait {
-  float: right;
-  width: 72px; height: 90px;
-  margin: 2px 0 8px 14px;
-  border-radius: 6px;
-  object-fit: cover; object-position: top;
-  filter: grayscale(.6);
-  opacity: 0;
-  transition: opacity .5s;
-}
-.portrait.loaded { opacity: 1; }
-
-.skeleton { display: grid; gap: 10px; }
-.skeleton i {
-  height: 12px; border-radius: 6px;
-  background: var(--edge);
-  opacity: .6;
-  animation: pulse 1.2s ease-in-out infinite;
-}
-.skeleton i:first-child { width: 40%; height: 16px; }
-.skeleton i:last-child { width: 70%; }
-@keyframes pulse { 50% { opacity: .25; } }
-
-.program { margin-top: 32px; padding-top: 18px; border-top: 1px solid var(--edge); }
-.program h3 { font-size: 11px; font-weight: 400; letter-spacing: .12em; color: var(--muted); margin-bottom: 4px; }
-.program ol { list-style: none; }
-.program li {
-  display: grid;
-  grid-template-columns: 44px 1fr;
-  padding: 9px 0;
-  cursor: pointer;
-  outline: none;
-}
-.program time { grid-row: span 2; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; padding-top: 1px; }
-.program .p-composer { font-size: 13.5px; font-weight: 700; }
-.program .p-title { font-size: 12.5px; line-height: 1.5; color: var(--muted); }
-.program li:hover .p-composer,
-.program li:focus-visible .p-composer { text-decoration: underline; text-underline-offset: 3px; }
-
-.credit { margin-top: 22px; font-size: 11px; color: var(--muted); }
+/* full screen: the radio grows and sits alone */
+.app:fullscreen { background: var(--desk); }
+.app:fullscreen .radio { transform: scale(1.35); }
+.app:fullscreen .radio.can-float { cursor: zoom-in; }
+.app:fullscreen .desk { gap: 60px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .radio .grille, .power::after { animation: none !important; }
-  .notes { transition: none; }
+  .radio, .radio[data-power="off"], .knob, .card-wrap, .card { transition: none; }
+  .radio[data-stream="loading"] .dial { animation: none; }
 }
