@@ -98,8 +98,12 @@ function setPower(on) {
   s.on = on;
   setState('power', on ? 'on' : 'off');
   $('power').setAttribute('aria-pressed', on);
-  if (on) startStream();
-  else stopStream();
+  if (on) {
+    startStream();
+    updateSession();
+  } else {
+    stopStream();
+  }
   renderNow();
 }
 
@@ -121,6 +125,9 @@ function setStream(state) {
     // Live: the static recedes to a faint bed under the music.
     setHiss(state === 'live' ? 0.009 : 0, state === 'live' ? 1.2 : 0.25);
   }
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.playbackState = state === 'loading' || state === 'live' ? 'playing' : 'paused';
+  }
   renderStatus();
 }
 
@@ -130,6 +137,7 @@ function startStream() {
 }
 
 function loadStream() {
+  clearTimeout(releaseTimer);
   setStream('loading');
   audio.src = STREAMS[s.streamIndex] + `?t=${Date.now()}`;
   audio.play().catch(() => {});
@@ -143,8 +151,14 @@ function releaseAudio() {
   audio.load();
 }
 
+// Switching off only pauses at first, so the Dynamic Island and lock screen keep
+// a play button; the connection is dropped if the radio stays off for a minute.
+let releaseTimer;
 function stopStream() {
-  releaseAudio();
+  clearTimeout(stallTimer);
+  clearTimeout(releaseTimer);
+  audio.pause();
+  releaseTimer = setTimeout(() => !s.on && releaseAudio(), 60000);
   setStream('off');
 }
 
@@ -193,10 +207,45 @@ audio.addEventListener('error', () => {
   if (audio.getAttribute('src')) failStream();
 });
 
-// Lock-screen / media-key controls do the same as the knob.
+// If the system pauses playback (AirPods out, a phone call), turn the knob off too.
+audio.addEventListener('pause', () => {
+  if (s.on && s.stream === 'live' && !audio.ended) setPower(false);
+});
+
+// ---------- Dynamic Island, lock screen, media keys ----------
+
+// Its own artwork, not the app icon: at Island size only one shape reads, so
+// it's just the knob on sage (iOS also tints the Island's waveform from it).
+const ARTWORK = [{
+  src: new URL('artwork-512.png', location.href).href,
+  sizes: '512x512',
+  type: 'image/png',
+}];
+
+// Title = the piece, subtitle = the composer.
+function updateSession() {
+  if (!('mediaSession' in navigator)) return;
+  const t = s.track;
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: t?.title || 'Symphony 92.4',
+    artist: t?.composer || '正在接收…',
+    album: t?.performer ? `${t.performer} · Symphony 92.4` : 'Symphony 92.4',
+    artwork: ARTWORK,
+  });
+}
+
 if ('mediaSession' in navigator) {
-  navigator.mediaSession.setActionHandler('play', () => setPower(true));
-  navigator.mediaSession.setActionHandler('pause', () => setPower(false));
+  const session = navigator.mediaSession;
+  session.setActionHandler('play', () => setPower(true));
+  session.setActionHandler('pause', () => setPower(false));
+  // A radio can't skip or seek: leave only play / pause in the Island.
+  for (const action of ['stop', 'previoustrack', 'nexttrack', 'seekbackward', 'seekforward', 'seekto']) {
+    try {
+      session.setActionHandler(action, action === 'stop' ? () => setPower(false) : null);
+    } catch {
+      // Not every browser knows every action.
+    }
+  }
 }
 
 document.addEventListener('keydown', (e) => {
@@ -335,13 +384,7 @@ async function refreshNowPlaying() {
     getNotes(now); // prefetch so the card opens instantly
     if (cardOpen()) renderCard(now);
     renderNow();
-    if ('mediaSession' in navigator) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: now.title,
-        artist: [now.composer, now.performer].filter(Boolean).join(' · '),
-        album: 'Symphony 92.4',
-      });
-    }
+    updateSession();
   } catch {
     // Metadata is best-effort; the radio keeps working without it.
   }
