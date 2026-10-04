@@ -1,0 +1,276 @@
+/* ============================================================
+   92.4 小收音机 — one small object, one button.
+   Layout: a single radio resting in the middle of an empty desk;
+   one line of text beneath it; everything else stays hidden.
+   ============================================================ */
+
+:root {
+  --bg: #e4e2dc;        /* desk */
+  --fg: #1d1d1b;
+  --muted: #77736b;
+  --body: #f4f3ef;      /* radio housing */
+  --edge: #cfccc4;
+  --hole: #2a2926;      /* speaker holes */
+  --accent: #e2701c;    /* the one lit thing */
+  --sheet: #f7f6f2;
+
+  --sans: 'Zen Kaku Gothic New', 'Hiragino Sans', 'PingFang SC', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121211; --fg: #ecebe7; --muted: #8d8a83;
+    --body: #2a2a27; --edge: #1b1b19; --hole: #0d0d0c;
+    --accent: #f08a35; --sheet: #1f1f1d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121211; --fg: #ecebe7; --muted: #8d8a83;
+  --body: #2a2a27; --edge: #1b1b19; --hole: #0d0d0c;
+  --accent: #f08a35; --sheet: #1f1f1d;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; background: none; border: 0; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.app {
+  min-height: 100%;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  padding-inline: 16px;
+  padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px);
+}
+
+.desk {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 34px;
+  padding-block: 48px;
+}
+
+/* ---------- the radio ---------- */
+
+.radio {
+  width: 232px; height: 148px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 26px;
+  padding: 22px 26px;
+  border-radius: 30px;
+  background: var(--body);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.5),
+    inset 0 -3px 0 var(--edge),
+    0 1px 2px rgba(0,0,0,.08),
+    0 18px 34px -16px rgba(0,0,0,.35);
+}
+
+/* a circle of punched holes */
+.grille {
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--hole) 1.7px, transparent 2.2px) center / 9px 9px;
+  -webkit-mask: radial-gradient(circle, #000 64%, transparent 66%);
+          mask: radial-gradient(circle, #000 64%, transparent 66%);
+  opacity: .78;
+  transition: opacity .6s;
+}
+/* while music plays, the holes breathe very slightly */
+.radio[data-stream="live"] .grille { animation: breathe 3.2s ease-in-out infinite; }
+@keyframes breathe { 50% { opacity: .95; } }
+
+.controls { display: grid; justify-items: center; gap: 12px; }
+
+.power {
+  position: relative;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  cursor: pointer;
+  background: var(--body);
+  box-shadow:
+    0 0 0 1px var(--edge),
+    0 4px 0 var(--edge),
+    0 6px 10px -4px rgba(0,0,0,.35);
+  transition: transform .12s, box-shadow .12s;
+}
+/* the lamp: a small dot in the button */
+.power::after {
+  content: '';
+  position: absolute; top: 50%; left: 50%;
+  width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  background: var(--edge);
+  transition: background .4s, box-shadow .4s;
+}
+.power:active { transform: translateY(3px); box-shadow: 0 0 0 1px var(--edge), 0 1px 0 var(--edge), 0 2px 4px -2px rgba(0,0,0,.3); }
+.radio[data-power="on"] .power { transform: translateY(2px); box-shadow: 0 0 0 1px var(--edge), 0 2px 0 var(--edge), 0 3px 6px -3px rgba(0,0,0,.3); }
+.radio[data-power="on"] .power::after { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+.radio[data-stream="loading"] .power::after { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { background: var(--edge); box-shadow: none; } }
+
+.print {
+  font-size: 10px;
+  letter-spacing: .18em;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- the one line beneath ---------- */
+
+.now {
+  display: grid; justify-items: center; gap: 4px;
+  max-width: 320px;
+  text-align: center;
+  cursor: pointer;
+  transition: opacity .5s;
+}
+.now:disabled { cursor: default; }
+.now-composer { font-weight: 700; font-size: 15px; text-wrap: balance; }
+.now-title { font-size: 13px; line-height: 1.6; color: var(--muted); text-wrap: balance; }
+.now:not(:disabled):hover .now-title { color: var(--fg); }
+.now.fading { opacity: 0; }
+
+.status { font-size: 13px; line-height: 1.6; color: var(--muted); text-align: center; max-width: 320px; }
+.app[data-stream="blocked"] .status,
+.app[data-stream="error"] .status { color: var(--accent); }
+
+.floating-note { display: none; font-size: 13px; color: var(--muted); }
+.app.floating .slot { display: none; }
+.app.floating .floating-note { display: block; }
+
+.foot {
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+  gap: 8px 18px;
+  padding-block: 16px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.float {
+  padding: 5px 12px;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--fg);
+  cursor: pointer;
+}
+.float:hover { border-color: var(--muted); }
+
+/* ---------- inside the floating window ---------- */
+
+body.pip { display: grid; place-items: center; overflow: hidden; }
+body.pip .radio { transform: scale(var(--pip-scale, 1)); }
+
+/* ---------- notes sheet ---------- */
+
+.scrim {
+  position: fixed; inset: 0; z-index: 19;
+  background: rgba(0,0,0,.35);
+  opacity: 0; pointer-events: none;
+  transition: opacity .35s;
+}
+.scrim.open { opacity: 1; pointer-events: auto; }
+
+/* phones: rises from the bottom */
+.notes {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  z-index: 20;
+  max-height: 86%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px 22px calc(28px + env(safe-area-inset-bottom, 0px));
+  border-radius: 18px 18px 0 0;
+  background: var(--sheet);
+  color: var(--fg);
+  box-shadow: 0 -12px 40px rgba(0,0,0,.25);
+  transform: translateY(104%);
+  transition: transform .45s cubic-bezier(.2, .8, .2, 1);
+}
+.notes.open { transform: none; }
+/* wider screens: slides in from the right */
+@media (min-width: 760px) {
+  .notes {
+    top: 0; left: auto;
+    width: 420px; max-height: none;
+    padding: 24px 30px 40px;
+    border-radius: 0;
+    transform: translateX(104%);
+  }
+}
+
+.notes-head { display: flex; justify-content: space-between; align-items: center; }
+.notes-close { width: 40px; height: 40px; margin-right: -10px; font-size: 26px; line-height: 1; color: var(--muted); cursor: pointer; }
+.lang { display: flex; border: 1px solid var(--edge); border-radius: 999px; overflow: hidden; }
+.lang button { padding: 4px 12px; font-size: 12px; color: var(--muted); cursor: pointer; }
+.lang button[aria-pressed="true"] { background: var(--fg); color: var(--sheet); }
+
+.notes-for { margin: 14px 0 22px; font-size: 15px; line-height: 1.55; }
+.notes-for b { display: block; }
+.notes-for span { color: var(--muted); font-size: 14px; }
+
+.notes-body { display: grid; gap: 26px; }
+.note { display: flow-root; animation: rise .4s ease-out both; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+.note-label { font-size: 11px; letter-spacing: .12em; color: var(--muted); }
+.note h3 { font-weight: 700; font-size: 17px; line-height: 1.4; margin: 4px 0 8px; text-wrap: balance; }
+.note .extract { font-size: 14.5px; line-height: 1.9; }
+.note a { display: inline-block; margin-top: 8px; font-size: 13px; color: var(--accent); text-decoration: none; }
+.note a:hover { text-decoration: underline; }
+.note.empty p { font-size: 14px; color: var(--muted); }
+.no-zh { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+
+.portrait {
+  float: right;
+  width: 72px; height: 90px;
+  margin: 2px 0 8px 14px;
+  border-radius: 6px;
+  object-fit: cover; object-position: top;
+  filter: grayscale(.6);
+  opacity: 0;
+  transition: opacity .5s;
+}
+.portrait.loaded { opacity: 1; }
+
+.skeleton { display: grid; gap: 10px; }
+.skeleton i {
+  height: 12px; border-radius: 6px;
+  background: var(--edge);
+  opacity: .6;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.skeleton i:first-child { width: 40%; height: 16px; }
+.skeleton i:last-child { width: 70%; }
+@keyframes pulse { 50% { opacity: .25; } }
+
+.program { margin-top: 32px; padding-top: 18px; border-top: 1px solid var(--edge); }
+.program h3 { font-size: 11px; font-weight: 400; letter-spacing: .12em; color: var(--muted); margin-bottom: 4px; }
+.program ol { list-style: none; }
+.program li {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  padding: 9px 0;
+  cursor: pointer;
+  outline: none;
+}
+.program time { grid-row: span 2; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; padding-top: 1px; }
+.program .p-composer { font-size: 13.5px; font-weight: 700; }
+.program .p-title { font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+.program li:hover .p-composer,
+.program li:focus-visible .p-composer { text-decoration: underline; text-underline-offset: 3px; }
+
+.credit { margin-top: 22px; font-size: 11px; color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .radio .grille, .power::after { animation: none !important; }
+  .notes { transition: none; }
+}

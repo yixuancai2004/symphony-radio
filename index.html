@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="一台只有一个按键的小收音机，收听新加坡 Symphony 92.4 古典音乐电台（非官方）。">
+  <meta name="theme-color" content="#e4e2dc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#121211" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="92.4">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <title>92.4 小收音机</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app" id="app" data-power="off" data-stream="off">
+    <main class="desk">
+      <div class="slot" id="radioSlot">
+        <div class="radio" id="radio" data-power="off" data-stream="off">
+          <div class="grille" aria-hidden="true"></div>
+          <div class="controls">
+            <button class="power" id="power" aria-pressed="false" aria-label="开 / 关"></button>
+            <span class="print">FM 92.4</span>
+          </div>
+        </div>
+      </div>
+      <p class="floating-note">收音机在桌面浮窗里。</p>
+
+      <button class="now" id="now" disabled>
+        <span class="now-composer" id="composer">Symphony 92.4</span>
+        <span class="now-title" id="title">新加坡的古典音乐电台</span>
+      </button>
+      <p class="status" id="status" hidden></p>
+    </main>
+
+    <footer class="foot">
+      <button class="float" id="float" hidden>浮到桌面</button>
+      <span>非官方 · 直播来自 Mediacorp Symphony 92.4</span>
+    </footer>
+  </div>
+
+  <!-- the one place with more information: about the piece on air -->
+  <div class="scrim" id="scrim"></div>
+  <aside class="notes" id="notes" inert aria-label="曲目介绍">
+    <div class="notes-head">
+      <div class="lang" role="group" aria-label="语言">
+        <button data-lang="zh">中</button><button data-lang="en">EN</button>
+      </div>
+      <button class="notes-close" id="notesClose" aria-label="关闭">×</button>
+    </div>
+    <p class="notes-for" id="notesFor"></p>
+    <div class="notes-body" id="notesBody"></div>
+    <section class="program">
+      <h3>刚才播过</h3>
+      <ol id="history"></ol>
+    </section>
+    <p class="credit">介绍出自维基百科（CC BY-SA）</p>
+  </aside>
+
+  <audio id="audio" preload="none"></audio>
+  <script src="app.js"></script>
+</body>
+</html>
